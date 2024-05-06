@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_url(relpath):
-    return f"https://huggingface.co/ResembleAI/resemble-enhance/resolve/main/{RUN_NAME}/{relpath}?download=true"
+    return f"https://hf-mirror.com/ResembleAI/resemble-enhance/resolve/main/{RUN_NAME}/{relpath}?download=true"
 
 
 def get_path(relpath):
