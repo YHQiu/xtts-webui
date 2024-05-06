@@ -97,4 +97,4 @@ with gr.Blocks(css=css) as demo:
     import modules
 if __name__ == "__main__":
     demo.queue()
-    demo.launch(inbrowser=True, share=True)
+    demo.launch(inbrowser=True, share=False, server_name='0.0.0.0', server_port=9874)
