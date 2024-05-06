@@ -6,7 +6,7 @@ import subprocess
 
 parser = ArgumentParser(description="Run the Uvicorn server.")
 parser.add_argument("-hs", "--host", default="0.0.0.0", help="Host to bind")
-parser.add_argument("-p", "--port", default=9874,
+parser.add_argument("-p", "--port", default=8010,
                     type=int, help="Port to bind")
 parser.add_argument("-d", "--device", default="cuda", type=str,
                     help="Device that will be used, you can choose cpu or cuda")
