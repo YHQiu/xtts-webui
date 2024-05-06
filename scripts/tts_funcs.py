@@ -16,6 +16,8 @@ import os
 import time
 import re
 
+from scripts.utils.wavhandle import remove_silence
+
 USE_DEEPSPEED = os.getenv("DEEPSPEED") == 'true'
 
 
@@ -437,6 +439,7 @@ class TTSWrapper:
                                     language, options, output_file)
 
             self.switch_model_device()  # Unload to CPU if lowram ON
+            output_file = remove_silence(output_file, output_file.replace(".wav", "hd.wav"))
             return output_file
 
         except Exception as e:
