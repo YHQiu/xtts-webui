@@ -57,7 +57,7 @@ def train_gpt(custom_model,version, language, num_epochs, batch_size, grad_acumm
 
     # download DVAE files if needed
     if not os.path.isfile(DVAE_CHECKPOINT) or not os.path.isfile(MEL_NORM_FILE):
-        print(" > Downloading DVAE files!")
+        print(f" > Downloading DVAE files! {DVAE_CHECKPOINT}")
         ModelManager._download_model_files([MEL_NORM_LINK, DVAE_CHECKPOINT_LINK], CHECKPOINTS_OUT_PATH, progress_bar=True)
 
 
