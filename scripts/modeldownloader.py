@@ -182,10 +182,10 @@ def download_model(this_dir, model_version):
 
     # Define files and their corresponding URLs
     files_to_download = {
-        "config.json": f"https://hf-mirror.com/https://huggingface.co/coqui/XTTS-v2/raw/{model_version}/config.json",
-        "model.pth": f"https://hf-mirror.com/https://huggingface.co/coqui/XTTS-v2/resolve/{model_version}/model.pth?download=true",
-        "vocab.json": f"https://hf-mirror.com/https://huggingface.co/coqui/XTTS-v2/raw/{model_version}/vocab.json",
-        "speakers_xtts.pth": f"https://hf-mirror.com/https://huggingface.co/coqui/XTTS-v2/resolve/main/speakers_xtts.pth?download=true"
+        "config.json": f"https://hf-mirror.com/coqui/XTTS-v2/raw/{model_version}/config.json",
+        "model.pth": f"https://hf-mirror.com/coqui/XTTS-v2/resolve/{model_version}/model.pth?download=true",
+        "vocab.json": f"https://hf-mirror.com/coqui/XTTS-v2/raw/{model_version}/vocab.json",
+        "speakers_xtts.pth": f"https://hf-mirror.com/coqui/XTTS-v2/resolve/main/speakers_xtts.pth?download=true"
     }
 
     # Check and create directories
