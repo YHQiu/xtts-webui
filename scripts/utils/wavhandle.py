@@ -2,6 +2,29 @@ import librosa
 import soundfile as sf
 import numpy as np
 
+def overlap_add(signal_frames, frame_length, hop_length):
+    """
+    Perform overlap-add method to reconstruct signal from frames.
+
+    Args:
+        signal_frames (np.ndarray): 2D array of signal frames.
+        frame_length (int): Length of each frame.
+        hop_length (int): Hop length (frame shift).
+
+    Returns:
+        np.ndarray: Reconstructed signal.
+    """
+    num_frames = signal_frames.shape[0]
+    signal_length = (num_frames - 1) * hop_length + frame_length
+    reconstructed_signal = np.zeros(signal_length)
+
+    for i in range(num_frames):
+        start_index = i * hop_length
+        end_index = start_index + frame_length
+        reconstructed_signal[start_index:end_index] += signal_frames[i]
+
+    return reconstructed_signal
+
 def remove_silence(input_file, output_file, energy_threshold=1.0):
     """
     Remove silence or low energy segments from a WAV file.
@@ -33,16 +56,19 @@ def remove_silence(input_file, output_file, energy_threshold=1.0):
     # Remove silence segments
     trimmed_audio = y[np.logical_not(silence_mask[:len(y)])]
 
-    # Check if the trimmed audio length is less than original audio length
-    print(len(trimmed_audio))
-    print(len(y))
-    if len(trimmed_audio) >= len(y):
-        print("Error: Trimmed audio length is not less than original audio length.")
+    # Reconstruct signal using overlap-add method
+    frame_length = 512  # You can adjust this according to your needs
+    hop_length = 256  # You can adjust this according to your needs
+    signal_frames = librosa.util.frame(trimmed_audio, frame_length=frame_length, hop_length=hop_length).T
+    reconstructed_audio = overlap_add(signal_frames, frame_length, hop_length)
+
+    # Check if the reconstructed audio length is less than original audio length
+    if len(reconstructed_audio) >= len(y):
+        print("Error: Reconstructed audio length is not less than original audio length.")
         return
 
-    # Save processed audio
     # Save processed audio using soundfile
-    sf.write(output_file, trimmed_audio, sr)
+    sf.write(output_file, reconstructed_audio, sr)
 
     return output_file
 
