@@ -2,7 +2,7 @@ import librosa
 import soundfile as sf
 import numpy as np
 
-def remove_silence(input_file, output_file, energy_threshold=0.1):
+def remove_silence(input_file, output_file, energy_threshold=1.0):
     """
     Remove silence or low energy segments from a WAV file.
 
