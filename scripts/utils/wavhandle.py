@@ -25,7 +25,7 @@ def overlap_add(signal_frames, frame_length, hop_length):
 
     return reconstructed_signal
 
-def remove_silence(input_file, output_file, energy_threshold=1.0):
+def remove_silence(input_file, output_file, energy_threshold=2.0):
     """
     Remove silence or low energy segments from a WAV file.
 
@@ -63,6 +63,8 @@ def remove_silence(input_file, output_file, energy_threshold=1.0):
     reconstructed_audio = overlap_add(signal_frames, frame_length, hop_length)
 
     # Check if the reconstructed audio length is less than original audio length
+    print(len(reconstructed_audio))
+    print(len(y))
     if len(reconstructed_audio) >= len(y):
         print("Error: Reconstructed audio length is not less than original audio length.")
         return
