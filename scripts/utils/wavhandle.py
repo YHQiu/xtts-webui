@@ -1,16 +1,17 @@
 import librosa
 import soundfile as sf
 import numpy as np
+from scipy.stats import norm
 
-def remove_silence(input_file, output_file, energy_threshold=2.0):
+def remove_silence(input_file, output_file, confidence_level=0.95):
     """
-    Remove silence or low energy segments from a WAV file.
+    Remove low energy segments from a WAV file.
 
     Args:
         input_file (str): Path to the input WAV file.
         output_file (str): Path to save the processed WAV file.
-        energy_threshold (float): Energy threshold to determine silence segments.
-                                  Defaults to 0.001.
+        confidence_level (float): Confidence level for determining energy threshold.
+                                   Defaults to 0.95.
 
     Returns:
         None
@@ -18,36 +19,38 @@ def remove_silence(input_file, output_file, energy_threshold=2.0):
     # Load audio file
     y, sr = librosa.load(input_file, sr=None)
 
-    # Calculate short-time Fourier transform
-    D = librosa.stft(y)
+    # Calculate the root mean square (RMS) energy of the audio signal
+    rms = librosa.feature.rms(y=y)[0]
 
-    # Calculate energy for each time window
-    energy = np.sum(np.abs(D) ** 2, axis=0)
+    # Calculate energy threshold using confidence level
+    # energy_threshold = norm.ppf(confidence_level, loc=mean, scale=std)
+    energy_threshold = 0.020
 
-    # Create mask for silence segments
-    silence_mask = energy < energy_threshold
+    # Create mask for high energy segments
+    high_energy_mask = rms >= energy_threshold
 
-    # Repeat the mask for each frame in the STFT
-    silence_mask = np.repeat(silence_mask, np.ceil(len(y) / len(silence_mask)))
+    # Find the start and end indices of high energy segments
+    segment_indices = []
+    start_idx = None
+    for i, value in enumerate(high_energy_mask):
+        if value and start_idx is None:
+            start_idx = i
+        elif not value and start_idx is not None:
+            segment_indices.append((start_idx, i))
+            start_idx = None
+    if start_idx is not None:
+        segment_indices.append((start_idx, len(high_energy_mask)))
 
-    # Remove silence segments
-    trimmed_audio = y[np.logical_not(silence_mask[:len(y)])]
+    # Concatenate high energy segments
+    trimmed_audio = np.concatenate([y[start * len(y)//len(rms):end * len(y)//len(rms)] for start, end in segment_indices])
 
-    # Check if the trimmed audio length is less than original audio length
-    print(len(trimmed_audio))
-    print(len(y))
-    if len(trimmed_audio) >= len(y):
-        print("Error: Trimmed audio length is not less than original audio length.")
-        return
-
-    # Save processed audio
     # Save processed audio using soundfile
     sf.write(output_file, trimmed_audio, sr)
 
     return output_file
 
 if __name__ == "__main__":
-    # 使用示例
-    input_file_path = 'test_3.wav'
+    # Example usage
+    input_file_path = 'test_2.wav'
     output_file_path = 'test_handle.wav'
     remove_silence(input_file_path, output_file_path)

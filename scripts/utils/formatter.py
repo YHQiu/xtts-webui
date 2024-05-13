@@ -190,7 +190,8 @@ def format_audio_list(audio_files, target_language="en", whisper_model = "large-
                     )
                 else:
                     continue
-
+                if len(sentence) > 81:
+                    continue
                 metadata["audio_file"].append(audio_file)
                 metadata["text"].append(sentence)
                 metadata["speaker_name"].append(speaker_name)

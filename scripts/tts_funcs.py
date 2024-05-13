@@ -15,7 +15,8 @@ from loguru import logger
 import os
 import time
 import re
-
+import jieba
+from functools import reduce
 from scripts.utils.wavhandle import remove_silence
 
 USE_DEEPSPEED = os.getenv("DEEPSPEED") == 'true'
@@ -47,6 +48,23 @@ reversed_supported_languages = {
 
 # Inbuild Speakers
 inbuild_speakers = ['Claribel Dervla', 'Daisy Studious', 'Gracie Wise', 'Tammie Ema', 'Alison','Dietlinde', 'Ana Florence', 'Annmarie Nele', 'Asya Anara', 'Brenda Stern', 'Gitta Nikolina', 'Henriette Usha', 'Sofia Hellen', 'Tammy Grit', 'Tanja Adelina', 'Vjollca Johnnie', 'Andrew Chipper', 'Badr Odhiambo', 'Dionisio Schuyler', 'Royston Min', 'Viktor Eka', 'Abrahan Mack', 'Adde Michal', 'Baldur Sanjin', 'Craig Gutsy', 'Damien Black', 'Gilberto Mathias', 'Ilkin Urbano', 'Kazuhiko Atallah', 'Ludvig Milivoj', 'Suad Qasim', 'Torcull Diarmuid', 'Viktor Menelaos', 'Zacharie Aimilios', 'Nova Hogarth', 'Maja Ruoho', 'Uta Obando', 'Lidiya Szekeres', 'Chandra MacFarland', 'Szofi Granger', 'Camilla Holmström', 'Lilya Stainthorpe', 'Zofija Kendrick', 'Narelle Moon', 'Barbora MacLean', 'Alexandra Hisakawa', 'Alma María', 'Rosemary Okafor', 'Ige Behringer', 'Filip Traverse', 'Damjan Chapman', 'Wulf Carlevaro', 'Aaron Dreschner', 'Kumar Dahl', 'Eugenio Mataracı', 'Ferran Simen', 'Xavier Hayasaka', 'Luis Moray', 'Marcos Rudaski']
+
+from pydub import AudioSegment
+
+def concatenate_audio_files(files, output_file):
+
+    print(f"concatenate_audio_files {len(files)} {output_file}")
+
+    # Load all audio segments
+    audio_segments = [AudioSegment.from_file(file) for file in files]
+
+    # Concatenate audio segments
+    concatenated_audio = reduce(lambda x, y: x + y, audio_segments)
+
+    # Export concatenated audio to a file
+    concatenated_audio.export(output_file, format="wav")
+
+    return output_file
 
 
 class TTSWrapper:
@@ -400,12 +418,12 @@ class TTSWrapper:
             return speaker_wavs[0]
         return speaker_wavs
 
-    def process_tts_to_file(self,this_dir, text, language, ref_speaker_wav, options, file_name_or_path="out.wav"):
+    def process_tts_to_file(self, this_dir, text, language, ref_speaker_wav, options, file_name_or_path="out.wav"):
         try:
-            print(ref_speaker_wav,"Test")
-            # Check if ref_speaker_wav is not in a list inbuild_speakers 
+            print(ref_speaker_wav, "Test")
+            # Check if ref_speaker_wav is not in a list inbuild_speakers
             is_inbuild = False
-            
+
             if ref_speaker_wav in inbuild_speakers:
                 speaker_wav = ref_speaker_wav
                 is_inbuild = True
@@ -418,8 +436,7 @@ class TTSWrapper:
                 output_file = file_name_or_path
             else:
                 # Only a filename was provided; prepend with output folder.
-                output_file = os.path.join(
-                    self.output_folder, file_name_or_path)
+                output_file = os.path.join(self.output_folder, file_name_or_path)
 
             # Replace double quotes with single, asterisks, carriage returns, and line feeds
             clear_text = self.clean_text(text)
@@ -430,19 +447,65 @@ class TTSWrapper:
 
             self.switch_model_device()  # Load to CUDA if lowram ON
 
-            # Define generation if model via api or locally
-            if self.model_source == "local":
-                self.local_generation(
-                    this_dir,clear_text, ref_speaker_wav, speaker_wav, language, options, output_file,is_inbuild)
-            else:
-                self.api_generation(clear_text, speaker_wav,
-                                    language, options, output_file)
+            # Process text if language contains Chinese
+            print(language)
+            if 'zh' in language:
+                sentences = [sentence.strip() for sentence in jieba.cut(clear_text) if sentence.strip()]
+                print(sentences)
+                sentences_chunk = ''
+                sentences_chunks = []
+                for sentence in sentences:
+                    if len(sentences_chunk) + len(sentence) > 40:
+                        sentences_chunks.append(f"{sentences_chunk}")
+                        sentences_chunk = sentence
+                    else:
+                        sentences_chunk += sentence
+                if len(sentences_chunk) > 0:
+                    sentences_chunks.append(sentences_chunk)
 
-            self.switch_model_device()  # Unload to CPU if lowram ON
+                generated_files = []
+                i = 0
+                for chunk in sentences_chunks:
+                    print(f"current is generating {chunk}")
+                    # Define generation if model via api or locally
+                    chunk_output_file = output_file.replace(".wav", f"_{i}.wav")
+                    i += 1
+                    if self.model_source == "local":
+                        print(f"use local generation")
+                        self.local_generation(
+                            this_dir, chunk, ref_speaker_wav, speaker_wav, language, options, chunk_output_file,
+                            is_inbuild)
+                    else:
+                        print(f"use api generation")
+                        self.api_generation(chunk, speaker_wav,
+                                            language, options, chunk_output_file)
+                    generated_files.append(chunk_output_file)
+
+                # Concatenate generated files
+                concatenate_audio_files(generated_files, output_file)
+
+                # Remove temporary files
+                for generated_file in generated_files:
+                    os.remove(generated_file)
+
+            else:
+                # Define generation if model via api or locally
+                if self.model_source == "local":
+                    print(f"use local generation")
+                    self.local_generation(
+                        this_dir, clear_text, ref_speaker_wav, speaker_wav, language, options, output_file, is_inbuild)
+                else:
+                    print(f"use api generation")
+                    self.api_generation(clear_text, speaker_wav,
+                                        language, options, output_file)
+            # 后处理音频
             output_file = remove_silence(output_file, output_file.replace(".wav", "hd.wav"))
+
+            print(output_file)
             return output_file
 
         except Exception as e:
+            print(e)
             raise e  # Propagate exceptions for endpoint handling.
 
 
