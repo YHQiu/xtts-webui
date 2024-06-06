@@ -68,7 +68,7 @@ def concatenate_audio_files(files, output_file):
 
 
 class TTSWrapper:
-    def __init__(self, output_folder="./output", speaker_folder="./speakers", lowvram=False, model_source="local", model_version="2.0.2", device="cuda"):
+    def __init__(self, output_folder="./output", speaker_folder="./speakers", lowvram=False, model_source="local", model_version="v2.0.3", device="cuda"):
 
         # If the user has chosen what to use, we rewrite the value to the value we want to use
         self.cuda = device
@@ -131,11 +131,9 @@ class TTSWrapper:
             download_model(this_dir, self.model_version)
 
         config = XttsConfig()
-        config_path = this_dir / 'models' / \
-            f'{self.model_version}' / 'config.json'
-        checkpoint_dir = this_dir / 'models' / f'{self.model_version}'
-        
-        speaker_file = this_dir / 'models' / f'{self.model_version}' / 'speakers_xtts.pth'
+        config_path = os.path.join(this_dir, 'models', self.model_version, 'config.json')
+        checkpoint_dir = os.path.join(this_dir, 'models', self.model_version)
+        speaker_file = os.path.join(this_dir, 'models', self.model_version, 'speakers_xtts.pth')
         
         # Check for exists
         if not os.path.exists(speaker_file):
@@ -336,7 +334,7 @@ class TTSWrapper:
         text = re.sub(r'"\s?(.*?)\s?"', r"'\1'", text)
         return text
 
-    def local_generation(self,this_dir, text, ref_speaker_wav, speaker_wav, language, options, output_file,is_inbuild = False):
+    def local_generation(self, this_dir, text, ref_speaker_wav, speaker_wav, language, options, output_file, is_inbuild = False):
         # Log time
         if (self.model_loaded == False):
             print("Loading model")
@@ -508,7 +506,32 @@ class TTSWrapper:
             print(e)
             raise e  # Propagate exceptions for endpoint handling.
 
+def test_inference():
+    """
+                temperature=options["temperature"],
+            length_penalty=options["length_penalty"],
+            repetition_penalty=options["repetition_penalty"],
+            top_k=options["top_k"],
+            top_p=options["top_p"],
+            enable_text_splitting=True,
+            speed=options["speed"]
+    """
+    options = {}
+    options["temperature"] = 0.75
+    options["length_penalty"] = 1.0
+    options["repetition_penalty"] = 5.0
+    options["top_k"] = 50
+    options["top_p"] = 0.85
+    options["speed"] = 1.0
+
+    this_dir = os.path.join("D:\\IdeaProjects\\py\\xtts-webui")
+    dummy_text = "This is a sample text."
+    dummy_language = "en"
+    speaker_wav = os.path.join(this_dir, "speakers", "female.wav")
+
+    tts = TTSWrapper(model_version='qhy-0')
+    out =  tts.process_tts_to_file(this_dir, dummy_text, dummy_language, speaker_wav, options)
+    print(out)
 
 if __name__ == "__main__":
-    print("Nothing")
-    # demo.launch(debug=True)
+    test_inference()
