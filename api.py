@@ -147,7 +147,7 @@ async def generate_audio_with_srt(
         audio_map = {}
         audio_map[len(generated_audio)] = 0
         min_duration = len((generated_audio))
-        while len(generated_audio) > duration:
+        while max_test > 0:
             output_file = f"{work_space}/{start_time}-{end_time}-{max_test}_output.wav"
             api.process_tts_to_file(this_dir, text=segment.content, ref_speaker_wav=temp_speaker_wav_path,
                                     language=language, options=options, file_name_or_path=output_file)
