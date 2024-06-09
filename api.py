@@ -182,7 +182,7 @@ async def generate_audio_with_srt(
 
 
 def start_app():
-    uvicorn.run(app, host="0.0.0.0", port=9880)
+    uvicorn.run(app, host="0.0.0.0", port=8010)
 
 
 if __name__ == "__main__":
