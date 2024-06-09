@@ -143,7 +143,7 @@ async def generate_audio_with_srt(
 
         generated_audio = AudioSegment.from_file(output_file)
 
-        max_test = 3
+        max_test = 5
         audio_map = {}
         audio_map[len(generated_audio)] = 0
         min_duration = len((generated_audio))
