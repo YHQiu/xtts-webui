@@ -1,4 +1,5 @@
 # tts.py
+import shutil
 
 import torch
 import torchaudio
@@ -497,7 +498,9 @@ class TTSWrapper:
                     self.api_generation(clear_text, speaker_wav,
                                         language, options, output_file)
             # 后处理音频
-            output_file = remove_silence(output_file, output_file.replace(".wav", "hd.wav"))
+            output_file_hd = remove_silence(output_file, output_file.replace(".wav", "hd.wav"))
+            os.remove(output_file)
+            shutil.move(output_file_hd, output_file)
 
             print(output_file)
             return output_file
