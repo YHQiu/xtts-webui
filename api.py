@@ -134,33 +134,48 @@ async def generate_audio_with_srt(
 
         temp_speaker_wav_path = f"{work_space}/{start_time}-{end_time}_segment.wav"
         segment_audio.export(temp_speaker_wav_path, format="wav")
-        output_file = f"{work_space}/{start_time}-{end_time}-0_output.wav"
-        options = {"speed": speed, "temperature": 0.85, "length_penalty": 1.0, "repetition_penalty": 5.0,
-                   "top_k": 50, "top_p": 0.85}
+        test_options = {"speed": speed, "temperature": 0.75, "length_penalty": 1.0, "repetition_penalty": 5.0,
+                   "top_k": 60, "top_p": 0.75}
 
-        api.process_tts_to_file(this_dir, text=segment.content, ref_speaker_wav=temp_speaker_wav_path,
-                                language=language, options=options, file_name_or_path=output_file)
-
-        generated_audio = AudioSegment.from_file(output_file)
-
-        max_test = 5
-        audio_map = {}
-        audio_map[len(generated_audio)] = 0
-        min_duration = len((generated_audio))
+        max_test = 3
+        test_audio_map = {}
+        best_test_duration = None
         while max_test > 0:
-            output_file = f"{work_space}/{start_time}-{end_time}-{max_test}_output.wav"
+            test_output_file = f"{work_space}/{start_time}_{end_time}_{max_test}_test_output.wav"
             api.process_tts_to_file(this_dir, text=segment.content, ref_speaker_wav=temp_speaker_wav_path,
-                                    language=language, options=options, file_name_or_path=output_file)
-            generated_audio = AudioSegment.from_file(output_file)
-            min_duration = len((generated_audio))
-            audio_map[len(generated_audio)] = max_test
+                                    language=language, options=test_options, file_name_or_path=test_output_file)
+            generated_audio = AudioSegment.from_file(test_output_file)
+            if best_test_duration is None:
+                best_test_duration = len(generated_audio)
+            elif best_test_duration > len(generated_audio):
+                best_test_duration = len(generated_audio)
+            test_audio_map[len(generated_audio)] = max_test
             max_test -= 1
             if max_test == 0:
                 break
+        test_output_file = f"{work_space}/{start_time}_{end_time}_{test_audio_map[best_test_duration]}_test_output.wav"
 
-        if max_test == 0:
-            output_file = f"{work_space}/{start_time}-{end_time}-{audio_map[min_duration]}_output.wav"
+        gen_options = {"speed": speed, "temperature": 0.85, "length_penalty": 1.0, "repetition_penalty": 5.0,
+                        "top_k": 50, "top_p": 0.85}
+        max_gen = 3
+        audio_map = {}
+        best_gen_duration = None
+        while max_gen > 0:
+            output_file = f"{work_space}/{start_time}_{end_time}_{max_gen}_gen_output.wav"
+            api.process_tts_to_file(this_dir, text=segment.content, ref_speaker_wav=test_output_file,
+                                    language=language, options=gen_options, file_name_or_path=output_file)
             generated_audio = AudioSegment.from_file(output_file)
+            if best_gen_duration is None:
+                best_gen_duration = len(generated_audio)
+            elif best_gen_duration > len(generated_audio):
+                best_gen_duration = len(generated_audio)
+            audio_map[len(generated_audio)] = max_gen
+            max_gen -= 1
+            if max_gen == 0:
+                break
+
+        output_file = f"{work_space}/{start_time}_{end_time}_{audio_map[best_gen_duration]}_gen_output.wav"
+        generated_audio = AudioSegment.from_file(output_file)
 
         if len(generated_audio) > duration:
             generated_audio = generated_audio.speedup(playback_speed=(len(generated_audio) / duration))
