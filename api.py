@@ -128,7 +128,7 @@ async def generate_audio_with_srt(
         segment_audio = ref_audio_segment[start_time:end_time]
 
         # Loop the reference audio segment to be at least 1.5 seconds long if it is shorter
-        min_duration = 750  # 1.5 seconds in milliseconds
+        min_duration = 500  # 1.5 seconds in milliseconds
         while len(segment_audio) < min_duration:
             segment_audio += segment_audio
 
