@@ -137,7 +137,7 @@ async def generate_audio_with_srt(
         test_options = {"speed": speed, "temperature": 0.75, "length_penalty": 1.0, "repetition_penalty": 5.0,
                    "top_k": 60, "top_p": 0.75}
 
-        max_test = 3
+        max_test = 5
         test_audio_map = {}
         best_test_duration = None
         while max_test > 0:
@@ -157,7 +157,7 @@ async def generate_audio_with_srt(
 
         gen_options = {"speed": speed, "temperature": 0.85, "length_penalty": 1.0, "repetition_penalty": 5.0,
                         "top_k": 50, "top_p": 0.85}
-        max_gen = 3
+        max_gen = 5
         audio_map = {}
         best_gen_duration = None
         while max_gen > 0:
