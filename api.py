@@ -185,12 +185,12 @@ async def generate_audio_with_srt(
         # if len(generated_audio) > int(duration*duration_refactor):
         generated_audio = generated_audio.speedup(playback_speed=(len(generated_audio) / duration*duration_refactor))
 
-        padded_audio = AudioSegment.silent(duration=int(duration*duration_refactor))
+        padded_audio = AudioSegment.silent(duration=duration*duration_refactor, frame_rate=24000)
         padded_audio = padded_audio.overlay(generated_audio)
 
         output_segments.append((int(start_time*duration_refactor), padded_audio))
 
-    final_output = AudioSegment.silent(duration=len(ref_audio_segment)*duration_refactor)
+    final_output = AudioSegment.silent(duration=len(ref_audio_segment)*duration_refactor, frame_rate=24000)
 
     for start_time, segment_audio in output_segments:
         final_output = final_output.overlay(segment_audio, position=start_time)
