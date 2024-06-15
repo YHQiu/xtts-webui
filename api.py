@@ -182,8 +182,8 @@ async def generate_audio_with_srt(
         output_file = f"{work_space}/{start_time}_{end_time}_{audio_map[best_gen_duration]}_gen_output.wav"
         generated_audio = AudioSegment.from_file(output_file)
 
-        if len(generated_audio) > int(duration*duration_refactor):
-            generated_audio = generated_audio.speedup(playback_speed=(len(generated_audio)*duration_refactor / duration))
+        # if len(generated_audio) > int(duration*duration_refactor):
+        generated_audio = generated_audio.speedup(playback_speed=(len(generated_audio) / duration*duration_refactor))
 
         padded_audio = AudioSegment.silent(duration=int(duration*duration_refactor))
         padded_audio = padded_audio.overlay(generated_audio)
