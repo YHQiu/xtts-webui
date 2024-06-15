@@ -191,6 +191,7 @@ async def generate_audio_with_srt(
             playback_speed = 0.5
         elif playback_speed > 2.0:
             playback_speed = 2.0
+        print(f"playback_speed={playback_speed}")
         generated_audio = generated_audio.speedup(playback_speed=playback_speed, crossfade=50)
 
         padded_audio = AudioSegment.silent(duration=duration*duration_refactor, frame_rate=24000)
