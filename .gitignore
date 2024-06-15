@@ -23,3 +23,5 @@ scripts/resemble_enhance/model_repo.zip
 *.pyc
 .env
 __pycache__
+.idea
+/.idea/
