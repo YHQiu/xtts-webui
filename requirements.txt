@@ -28,6 +28,5 @@ pysubs2
 fastapi
 srt
 moviepy
-
 #onnx
 #onnxruntime-gpu

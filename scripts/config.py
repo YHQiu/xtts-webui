@@ -1,5 +1,5 @@
 speed_change_config = {
-    "en": 0.9
+    "en": 0.8
 }
 
 def get_speed_refactor(src_language, target_language):

@@ -16,6 +16,7 @@ from scripts import config
 from scripts.config import get_speed_refactor
 from scripts.funcs import resemble_enhance_audio
 from scripts.tts_funcs import TTSWrapper
+from scripts.utils.wavhandle import wav_speedup
 
 app = FastAPI()
 api = TTSWrapper()
@@ -186,7 +187,7 @@ async def generate_audio_with_srt(
         # Calculate playback speed
         start_time = int(start_time * duration_refactor)
         duration = int(duration * duration_refactor)
-        playback_speed = len(generated_audio) / duration
+        playback_speed = (len(generated_audio) / duration)
 
         # Ensure playback_speed is within reasonable bounds
         if playback_speed < 0.5:
@@ -194,7 +195,7 @@ async def generate_audio_with_srt(
         elif playback_speed > 2.0:
             playback_speed = 2.0
         print(f"playback_speed={playback_speed}")
-        generated_audio = generated_audio.speedup(playback_speed=playback_speed, crossfade=50)
+        generated_audio = wav_speedup(generated_audio, playback_speed=playback_speed)
 
         padded_audio = AudioSegment.silent(duration=duration, frame_rate=24000)
         padded_audio = padded_audio.overlay(generated_audio)
