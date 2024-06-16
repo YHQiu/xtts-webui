@@ -12,6 +12,8 @@ from fastapi.responses import FileResponse
 from pydub import AudioSegment
 from moviepy.editor import VideoFileClip
 
+from scripts import config
+from scripts.config import get_speed_refactor
 from scripts.funcs import resemble_enhance_audio
 from scripts.tts_funcs import TTSWrapper
 
@@ -109,16 +111,19 @@ async def generate_audio_with_srt(
     work_space = os.path.join(temp_root_dir, "temp", f"{uuid.uuid4()}")
     os.makedirs(work_space, exist_ok=True)
 
-    ref_speaker_wav = os.path.join(work_space, "ref_speaker.wav")
-    ref_speaker_total = None
-    for index, segment in enumerate(srt_segments):
-        start_time = (segment.start.total_seconds()) * 1000  # Convert to milliseconds
-        end_time = (segment.end.total_seconds()) * 1000  # Convert to milliseconds
-        if index == 0:
-            ref_speaker_total = ref_audio_segment[start_time:end_time]
-        else:
-            ref_speaker_total += ref_audio_segment[start_time:end_time]
-    ref_speaker_total.export(ref_speaker_wav, format="wav")
+    # ref_speaker_wav = os.path.join(work_space, "ref_speaker.wav")
+    # ref_speaker_total = None
+    # for index, segment in enumerate(srt_segments):
+    #     start_time = (segment.start.total_seconds()) * 1000  # Convert to milliseconds
+    #     end_time = (segment.end.total_seconds()) * 1000  # Convert to milliseconds
+    #     if index == 0:
+    #         ref_speaker_total = ref_audio_segment[start_time:end_time]
+    #     else:
+    #         ref_speaker_total += ref_audio_segment[start_time:end_time]
+    # ref_speaker_total.export(ref_speaker_wav, format="wav")
+
+    # 时长调整因子
+    duration_refactor = 1.0/config.get_speed_refactor(src_language=None, target_language=language)
 
     for segment in srt_segments:
         start_time = (segment.start.total_seconds()) * 1000  # Convert to milliseconds
@@ -177,15 +182,26 @@ async def generate_audio_with_srt(
         output_file = f"{work_space}/{start_time}_{end_time}_{audio_map[best_gen_duration]}_gen_output.wav"
         generated_audio = AudioSegment.from_file(output_file)
 
-        if len(generated_audio) > duration:
-            generated_audio = generated_audio.speedup(playback_speed=(len(generated_audio) / duration))
+        # if len(generated_audio) > int(duration*duration_refactor):
+        # Calculate playback speed
+        start_time = int(start_time * duration_refactor)
+        duration = int(duration * duration_refactor)
+        playback_speed = len(generated_audio) / duration
 
-        padded_audio = AudioSegment.silent(duration=duration)
+        # Ensure playback_speed is within reasonable bounds
+        if playback_speed < 0.5:
+            playback_speed = 0.5
+        elif playback_speed > 2.0:
+            playback_speed = 2.0
+        print(f"playback_speed={playback_speed}")
+        generated_audio = generated_audio.speedup(playback_speed=playback_speed, crossfade=50)
+
+        padded_audio = AudioSegment.silent(duration=duration, frame_rate=24000)
         padded_audio = padded_audio.overlay(generated_audio)
 
-        output_segments.append((start_time, padded_audio))
+        output_segments.append((int(start_time), padded_audio))
 
-    final_output = AudioSegment.silent(duration=len(ref_audio_segment))
+    final_output = AudioSegment.silent(duration=int(len(ref_audio_segment)*duration_refactor), frame_rate=24000)
 
     for start_time, segment_audio in output_segments:
         final_output = final_output.overlay(segment_audio, position=start_time)
