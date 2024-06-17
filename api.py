@@ -4,6 +4,7 @@ import os
 import uuid
 from pathlib import Path
 
+import loguru
 import srt
 import uvicorn
 from fastapi import FastAPI, UploadFile, File, Form
@@ -23,6 +24,9 @@ api = TTSWrapper()
 os.makedirs("output", exist_ok=True)
 this_dir = Path(__file__).parent.resolve()
 temp_root_dir = this_dir
+logger = loguru.logger
+# 生成次数
+gen_count = 1
 
 @app.post("/generate_audio/")
 async def generate_audio(
@@ -115,8 +119,6 @@ async def generate_audio_with_srt(
     # 时长调整因子
     duration_refactor = 1.0/config.get_speed_refactor(src_language=None, target_language=language)
 
-    # 生成次数
-    gen_count = 5
     for segment in srt_segments:
         start_time = (segment.start.total_seconds()) * 1000  # Convert to milliseconds
         end_time = (segment.end.total_seconds()) * 1000  # Convert to milliseconds
@@ -181,15 +183,19 @@ async def generate_audio_with_srt(
 
         # if len(generated_audio) > int(duration*duration_refactor):
         # Calculate playback speed
+        generated_duration = len(generated_audio)
+        logger.info(f"generated_duration is {generated_duration}")
+
         start_time = int(start_time * duration_refactor)
         duration = int(duration * duration_refactor)
-        playback_speed = (len(generated_audio) / duration)
+        playback_speed = (generated_duration / duration)
 
         # Ensure playback_speed is within reasonable bounds
         if playback_speed < 1.0:
             playback_speed = 1.0
         elif playback_speed > 2.0:
             playback_speed = 2.0
+
         print(f"playback_speed={playback_speed}")
         generated_audio = wav_speedup(generated_audio, playback_speed=playback_speed)
 
