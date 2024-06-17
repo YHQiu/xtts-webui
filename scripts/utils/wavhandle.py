@@ -4,6 +4,9 @@ import numpy as np
 from scipy.stats import norm
 from pydub import AudioSegment
 
+from scripts.utils import ffmpeg_tools
+
+
 def remove_silence(input_file, output_file, confidence_level=0.95):
     """
     Remove low energy segments from a WAV file.
@@ -50,22 +53,16 @@ def remove_silence(input_file, output_file, confidence_level=0.95):
 
     return output_file
 
-def wav_speedup(audio, playback_speed, output_file_path=None):
-    if isinstance(audio, str):
-        generated_audio = AudioSegment.from_file(audio)
-        generated_audio = generated_audio.speedup(playback_speed=playback_speed)
-        generated_audio.export(output_file_path)
-        return output_file_path
-    else:
-        generated_audio = audio
-        generated_audio = generated_audio.speedup(playback_speed=playback_speed)
-        return generated_audio
+def wav_speedup(audio, playback_speed, output_file_path=None, sample_rate =24000):
+    ffmpeg_tools.adjust_audio_speed(audio, output_file_path, playback_speed)
+    return output_file_path
 
 if __name__ == "__main__":
     # Example usage
     input_file_path = 'test_2.wav'
     output_file_path = 'test_handle.wav'
 
-    wav_speedup(input_file_path, playback_speed=1.12, output_file_path=output_file_path)
+    # wav_speedup(input_file_path, playback_speed=1.0044444444444445, output_file_path=output_file_path)
+    wav_speedup(input_file_path, playback_speed=1.0044444444444445, output_file_path=output_file_path)
 
     # remove_silence(input_file_path, output_file_path)

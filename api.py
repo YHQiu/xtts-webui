@@ -179,34 +179,37 @@ async def generate_audio_with_srt(
                 break
 
         output_file = f"{work_space}/{start_time}_{end_time}_{audio_map[best_gen_duration]}_gen_output.wav"
-        generated_audio = AudioSegment.from_file(output_file)
 
         # if len(generated_audio) > int(duration*duration_refactor):
         # Calculate playback speed
         generated_duration = len(generated_audio)
-        logger.info(f"generated_duration is {generated_duration}")
-
         start_time = int(start_time * duration_refactor)
         duration = int(duration * duration_refactor)
-        playback_speed = (generated_duration / duration)
+        playback_speed = (1.0*generated_duration / duration)
+
+        logger.info(f"start_time is {start_time} generated_duration is {generated_duration} duration is {duration} duration_refactor is {duration_refactor}")
 
         # Ensure playback_speed is within reasonable bounds
-        if playback_speed < 1.0:
-            playback_speed = 1.0
+        if playback_speed < 0.5:
+            playback_speed = 0.51
         elif playback_speed > 2.0:
             playback_speed = 2.0
 
-        print(f"playback_speed={playback_speed}")
-        generated_audio = wav_speedup(generated_audio, playback_speed=playback_speed)
+        print(f"generated_audio {len(generated_audio)} playback_speed={playback_speed}")
+        speed_output_file_path = wav_speedup(output_file, playback_speed=playback_speed, output_file_path=output_file.replace(".wav", "_adjust_sp.wav"))
+        generated_audio = AudioSegment.from_file(speed_output_file_path)
 
-        padded_audio = AudioSegment.silent(duration=duration, frame_rate=24000)
-        padded_audio = padded_audio.overlay(generated_audio)
+        print(f"generated_audio {len(generated_audio)} playback_speed={playback_speed}")
 
-        output_segments.append((int(start_time), padded_audio))
+        # padded_audio = AudioSegment.silent(duration=duration, frame_rate=24000)
+        # padded_audio = padded_audio.overlay(generated_audio)
+
+        output_segments.append((start_time, generated_audio))
 
     final_output = AudioSegment.silent(duration=int(len(ref_audio_segment)*duration_refactor), frame_rate=24000)
 
     for start_time, segment_audio in output_segments:
+        print(f"{len(final_output)} {start_time} {len(segment_audio)}")
         final_output = final_output.overlay(segment_audio, position=start_time)
 
     final_output_path = os.path.join("output", f"{uuid.uuid4()}_final_output.wav")
