@@ -112,20 +112,10 @@ async def generate_audio_with_srt(
     work_space = os.path.join(temp_root_dir, "temp", f"{uuid.uuid4()}")
     os.makedirs(work_space, exist_ok=True)
 
-    # ref_speaker_wav = os.path.join(work_space, "ref_speaker.wav")
-    # ref_speaker_total = None
-    # for index, segment in enumerate(srt_segments):
-    #     start_time = (segment.start.total_seconds()) * 1000  # Convert to milliseconds
-    #     end_time = (segment.end.total_seconds()) * 1000  # Convert to milliseconds
-    #     if index == 0:
-    #         ref_speaker_total = ref_audio_segment[start_time:end_time]
-    #     else:
-    #         ref_speaker_total += ref_audio_segment[start_time:end_time]
-    # ref_speaker_total.export(ref_speaker_wav, format="wav")
-
     # 时长调整因子
     duration_refactor = 1.0/config.get_speed_refactor(src_language=None, target_language=language)
 
+    # 生成次数
     gen_count = 5
     for segment in srt_segments:
         start_time = (segment.start.total_seconds()) * 1000  # Convert to milliseconds
@@ -144,7 +134,9 @@ async def generate_audio_with_srt(
         test_options = {"speed": speed, "temperature": 0.75, "length_penalty": 1.0, "repetition_penalty": 5.0,
                    "top_k": 60, "top_p": 0.75}
 
+        # 最大测试次数
         max_test = gen_count
+
         test_audio_map = {}
         best_test_duration = None
         while max_test > 0:
@@ -164,7 +156,10 @@ async def generate_audio_with_srt(
 
         gen_options = {"speed": speed, "temperature": 0.85, "length_penalty": 1.0, "repetition_penalty": 5.0,
                         "top_k": 50, "top_p": 0.85}
+
+        # 最大生成次数
         max_gen = gen_count
+
         audio_map = {}
         best_gen_duration = None
         while max_gen > 0:
