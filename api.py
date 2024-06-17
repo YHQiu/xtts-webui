@@ -126,6 +126,7 @@ async def generate_audio_with_srt(
     # 时长调整因子
     duration_refactor = 1.0/config.get_speed_refactor(src_language=None, target_language=language)
 
+    gen_count = 5
     for segment in srt_segments:
         start_time = (segment.start.total_seconds()) * 1000  # Convert to milliseconds
         end_time = (segment.end.total_seconds()) * 1000  # Convert to milliseconds
@@ -143,7 +144,7 @@ async def generate_audio_with_srt(
         test_options = {"speed": speed, "temperature": 0.75, "length_penalty": 1.0, "repetition_penalty": 5.0,
                    "top_k": 60, "top_p": 0.75}
 
-        max_test = 5
+        max_test = gen_count
         test_audio_map = {}
         best_test_duration = None
         while max_test > 0:
@@ -163,7 +164,7 @@ async def generate_audio_with_srt(
 
         gen_options = {"speed": speed, "temperature": 0.85, "length_penalty": 1.0, "repetition_penalty": 5.0,
                         "top_k": 50, "top_p": 0.85}
-        max_gen = 5
+        max_gen = gen_count
         audio_map = {}
         best_gen_duration = None
         while max_gen > 0:
@@ -190,8 +191,8 @@ async def generate_audio_with_srt(
         playback_speed = (len(generated_audio) / duration)
 
         # Ensure playback_speed is within reasonable bounds
-        if playback_speed < 0.5:
-            playback_speed = 0.5
+        if playback_speed < 1.0:
+            playback_speed = 1.0
         elif playback_speed > 2.0:
             playback_speed = 2.0
         print(f"playback_speed={playback_speed}")
