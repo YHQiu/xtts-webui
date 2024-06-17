@@ -16,7 +16,9 @@ def adjust_audio_speed(input_path, output_path, speed):
         return
 
     # 计算所需的总速度调整
-    target_duration = int(current_duration*speed)
+    target_duration = current_duration*speed
+    if target_duration == 0:
+        print(f"ERROR: current_duration is {current_duration}, speed is {speed}, target_duration is {target_duration}")
     total_adjustment = round(current_duration / target_duration, 2)
 
     if total_adjustment >= 100:
