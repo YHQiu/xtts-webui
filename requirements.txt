@@ -1,6 +1,6 @@
 gradio==4.13.0
-torch==2.1.1
-torchaudio==2.1.1
+#==2.1.1
+#torchaudio==2.1.1
 faster-whisper==1.0.1
 tts>=0.22.0
 langid
@@ -23,7 +23,6 @@ praat-parselmouth>=0.4.2
 translators
 transformers==4.36.2
 deepl
-requests
 pysubs2
 fastapi
 srt

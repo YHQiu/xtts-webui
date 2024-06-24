@@ -26,7 +26,7 @@ this_dir = Path(__file__).parent.resolve()
 temp_root_dir = this_dir
 logger = loguru.logger
 # 生成次数
-gen_count = 1
+gen_count = 5
 
 @app.post("/generate_audio/")
 async def generate_audio(
@@ -141,47 +141,57 @@ async def generate_audio_with_srt(
 
         test_audio_map = {}
         best_test_duration = None
+        best_distance = None
         while max_test > 0:
             test_output_file = f"{work_space}/{start_time}_{end_time}_{max_test}_test_output.wav"
             api.process_tts_to_file(this_dir, text=segment.content, ref_speaker_wav=temp_speaker_wav_path,
                                     language=language, options=test_options, file_name_or_path=test_output_file)
             generated_audio = AudioSegment.from_file(test_output_file)
-            if best_test_duration is None:
+            distance = abs(len(generated_audio) - duration)
+            if best_distance is None:
+                best_distance = distance
                 best_test_duration = len(generated_audio)
-            elif best_test_duration > len(generated_audio):
+            elif distance < best_distance:
                 best_test_duration = len(generated_audio)
+            # if best_test_duration is None:
+            #     best_test_duration = len(generated_audio)
+            # elif best_test_duration > len(generated_audio):
+            #     best_test_duration = len(generated_audio)
             test_audio_map[len(generated_audio)] = max_test
             max_test -= 1
             if max_test == 0:
                 break
         test_output_file = f"{work_space}/{start_time}_{end_time}_{test_audio_map[best_test_duration]}_test_output.wav"
 
-        gen_options = {"speed": speed, "temperature": 0.85, "length_penalty": 1.0, "repetition_penalty": 5.0,
-                        "top_k": 50, "top_p": 0.85}
+        # GEN
+        # gen_options = {"speed": speed, "temperature": 0.85, "length_penalty": 1.0, "repetition_penalty": 5.0,
+        #                 "top_k": 50, "top_p": 0.85}
 
-        # 最大生成次数
-        max_gen = gen_count
+        # # 最大生成次数
+        # max_gen = gen_count
+        #
+        # audio_map = {}
+        # best_gen_duration = None
+        # while max_gen > 0:
+        #     output_file = f"{work_space}/{start_time}_{end_time}_{max_gen}_gen_output.wav"
+        #     api.process_tts_to_file(this_dir, text=segment.content, ref_speaker_wav=test_output_file,
+        #                             language=language, options=gen_options, file_name_or_path=output_file)
+        #     generated_audio = AudioSegment.from_file(output_file)
+        #     if best_gen_duration is None:
+        #         best_gen_duration = len(generated_audio)
+        #     elif best_gen_duration > len(generated_audio):
+        #         best_gen_duration = len(generated_audio)
+        #     audio_map[len(generated_audio)] = max_gen
+        #     max_gen -= 1
+        #     if max_gen == 0:
+        #         break
+        #
+        # output_file = f"{work_space}/{start_time}_{end_time}_{audio_map[best_gen_duration]}_gen_output.wav"
 
-        audio_map = {}
-        best_gen_duration = None
-        while max_gen > 0:
-            output_file = f"{work_space}/{start_time}_{end_time}_{max_gen}_gen_output.wav"
-            api.process_tts_to_file(this_dir, text=segment.content, ref_speaker_wav=test_output_file,
-                                    language=language, options=gen_options, file_name_or_path=output_file)
-            generated_audio = AudioSegment.from_file(output_file)
-            if best_gen_duration is None:
-                best_gen_duration = len(generated_audio)
-            elif best_gen_duration > len(generated_audio):
-                best_gen_duration = len(generated_audio)
-            audio_map[len(generated_audio)] = max_gen
-            max_gen -= 1
-            if max_gen == 0:
-                break
+        output_file = test_output_file
 
-        output_file = f"{work_space}/{start_time}_{end_time}_{audio_map[best_gen_duration]}_gen_output.wav"
-
-        # if len(generated_audio) > int(duration*duration_refactor):
         # Calculate playback speed
+        generated_audio = AudioSegment.from_file(output_file)
         generated_duration = len(generated_audio)
         start_time = int(start_time * duration_refactor)
         duration = int(duration * duration_refactor)
@@ -192,10 +202,16 @@ async def generate_audio_with_srt(
         # Ensure playback_speed is within reasonable bounds
         if playback_speed < 0.5:
             playback_speed = 0.51
-        elif playback_speed > 2.0:
-            playback_speed = 2.0
+        elif playback_speed > 1.2:
+            playback_speed = 1.2
 
         print(f"generated_audio {len(generated_audio)} playback_speed={playback_speed}")
+
+        # NEW
+        # generated_audio = AudioSegment.from_file(output_file)
+        # generated_audio = generated_audio.speedup(playback_speed=playback_speed, crossfade=50)
+
+        # OLD
         speed_output_file_path = wav_speedup(output_file, playback_speed=playback_speed, output_file_path=output_file.replace(".wav", "_adjust_sp.wav"))
         generated_audio = AudioSegment.from_file(speed_output_file_path)
 

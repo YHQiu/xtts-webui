@@ -4,6 +4,7 @@ SET TEMP=temp
 
 call venv/scripts/activate
 
-python app.py --deepspeed --rvc
+@REM python app.py --deepspeed --rvc
+python app.py  --rvc
 
 pause

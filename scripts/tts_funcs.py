@@ -75,6 +75,10 @@ class TTSWrapper:
         self.cuda = device
         self.device = 'cpu' if lowvram else (
             self.cuda if torch.cuda.is_available() else "cpu")
+        if torch.cuda.is_available():
+            logger.info("USE CUDA")
+        else:
+            logger.info("NOT IN CUDA")
         # Store whether we want to run in low VRAM mode.
         self.lowvram = lowvram
 
